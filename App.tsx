@@ -4,10 +4,10 @@ import {
   Karla_700Bold,
   useFonts,
 } from '@expo-google-fonts/karla';
+import { Routes } from '@routes/index';
 import { THEME } from '@theme/index';
 import { StatusBar } from 'expo-status-bar';
 import { NativeBaseProvider } from 'native-base';
-import { Text } from 'react-native';
 
 export default function App() {
   const [fontsLoaded] = useFonts({
@@ -18,11 +18,7 @@ export default function App() {
   return (
     <NativeBaseProvider theme={THEME}>
       <StatusBar style="auto" />
-      {fontsLoaded ? (
-        <Text>Open up App.js to start working on your app!</Text>
-      ) : (
-        <Loading />
-      )}
+      {fontsLoaded ? <Routes /> : <Loading />}
     </NativeBaseProvider>
   );
 }
