@@ -2,6 +2,7 @@ import { Loading } from '@components/Loading';
 import {
   Karla_400Regular,
   Karla_700Bold,
+  Karla_300Light,
   useFonts,
 } from '@expo-google-fonts/karla';
 import { Routes } from '@routes/index';
@@ -11,8 +12,9 @@ import { NativeBaseProvider } from 'native-base';
 
 export default function App() {
   const [fontsLoaded] = useFonts({
-    Karla_400Regular,
     Karla_700Bold,
+    Karla_400Regular,
+    Karla_300Light,
   });
 
   return (
