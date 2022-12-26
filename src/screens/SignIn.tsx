@@ -5,6 +5,7 @@ import { Input } from '@components/Input';
 import { TextLight } from '@components/TextLight';
 import { TextRegular } from '@components/TextRegular';
 import { yupResolver } from '@hookform/resolvers/yup';
+import { useAuth } from '@hooks/useAuth';
 import { useNavigation } from '@react-navigation/native';
 import { AuthNavigatorRoutesProps } from '@routes/auth.routes';
 import { AppError } from '@utils/AppError';
@@ -50,6 +51,7 @@ export function SignIn() {
   const { colors, sizes } = useTheme();
   const navigation = useNavigation<AuthNavigatorRoutesProps>();
   const toast = useToast();
+  const { signIn } = useAuth();
 
   function handleNewAccount() {
     navigation.navigate('SignUp');
@@ -58,7 +60,7 @@ export function SignIn() {
   async function handleSignIn({ email, password }: FormDataProps) {
     try {
       setIsLoading(true);
-      // await signIn(email, password);
+      await signIn(email, password);
     } catch (e) {
       const isAppError = e instanceof AppError;
 

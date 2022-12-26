@@ -24,6 +24,18 @@
       ],
       "@utils/*": [
         "./src/utils/*"
+      ],
+      "@services/*": [
+        "./src/services/*"
+      ],
+      "@dtos/*": [
+        "./src/dtos/*"
+      ],
+      "@contexts/*": [
+        "./src/contexts/*"
+      ],
+      "@hooks/*": [
+        "./src/hooks/*"
       ]
     }
   }

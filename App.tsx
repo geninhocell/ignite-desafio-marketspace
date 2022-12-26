@@ -1,4 +1,5 @@
 import { Loading } from '@components/Loading';
+import { AuthContextProvider } from '@contexts/AuthContext';
 import {
   Karla_400Regular,
   Karla_700Bold,
@@ -20,7 +21,9 @@ export default function App() {
   return (
     <NativeBaseProvider theme={THEME}>
       <StatusBar style="auto" />
-      {fontsLoaded ? <Routes /> : <Loading />}
+      <AuthContextProvider>
+        {fontsLoaded ? <Routes /> : <Loading />}
+      </AuthContextProvider>
     </NativeBaseProvider>
   );
 }

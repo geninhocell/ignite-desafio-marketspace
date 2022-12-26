@@ -1,4 +1,4 @@
-import { Button as NativeBaseButton, IButtonProps, Text } from 'native-base';
+import { Button as NativeBaseButton, IButtonProps } from 'native-base';
 import React from 'react';
 
 import { TextBold } from './TextBold';
