@@ -10,6 +10,7 @@ import { Routes } from '@routes/index';
 import { THEME } from '@theme/index';
 import { StatusBar } from 'expo-status-bar';
 import { NativeBaseProvider } from 'native-base';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 export default function App() {
   const [fontsLoaded] = useFonts({
@@ -19,11 +20,13 @@ export default function App() {
   });
 
   return (
-    <NativeBaseProvider theme={THEME}>
-      <StatusBar style="auto" />
-      <AuthContextProvider>
-        {fontsLoaded ? <Routes /> : <Loading />}
-      </AuthContextProvider>
-    </NativeBaseProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <NativeBaseProvider theme={THEME}>
+        <StatusBar style="auto" />
+        <AuthContextProvider>
+          {fontsLoaded ? <Routes /> : <Loading />}
+        </AuthContextProvider>
+      </NativeBaseProvider>
+    </GestureHandlerRootView>
   );
 }

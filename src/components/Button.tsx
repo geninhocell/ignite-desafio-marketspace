@@ -26,11 +26,13 @@ export function Button({ title, bg = 'black', ...rest }: Props) {
       fontFamily="heading"
       fontSize="sm"
       rounded="sm"
+      justifyContent="center"
+      alignItems="center"
       _pressed={{
         bg: bgPressedAtual,
       }}
       {...rest}>
-      <TextBold color={colorText} text={title} />
+      <TextBold textAlign="center" color={colorText} text={title} />
     </NativeBaseButton>
   );
 }
