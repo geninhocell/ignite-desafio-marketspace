@@ -3,16 +3,18 @@ import {
   createBottomTabNavigator,
   BottomTabNavigationProp,
 } from '@react-navigation/bottom-tabs';
-import { Adverts } from '@screens/Adverts';
+import { NavigatorScreenParams } from '@react-navigation/native';
 import { Home } from '@screens/Home';
 import { SignIn } from '@screens/SignIn';
 import { useTheme } from 'native-base';
 import { Tag, House, SignOut } from 'phosphor-react-native';
 import { Platform } from 'react-native';
 
+import { AdvertsRoutes, AdvertsRoutesType } from './adverts.routes';
+
 type AppRoutesType = {
   Home: undefined;
-  Adverts: undefined;
+  AdvertsRoutes: NavigatorScreenParams<AdvertsRoutesType>;
   SignIn: undefined;
 };
 
@@ -49,8 +51,8 @@ export function AppRoutes() {
         }}
       />
       <Screen
-        name="Adverts"
-        component={Adverts}
+        name="AdvertsRoutes"
+        component={AdvertsRoutes}
         options={{
           tabBarIcon: ({ color }) => <Tag color={color} size={iconSize} />,
         }}

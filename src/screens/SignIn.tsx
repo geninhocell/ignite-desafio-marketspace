@@ -48,7 +48,7 @@ export function SignIn() {
     resolver: yupResolver(signUpSchema),
   });
 
-  const { colors, sizes } = useTheme();
+  const { sizes } = useTheme();
   const navigation = useNavigation<AuthNavigatorRoutesProps>();
   const toast = useToast();
   const { signIn } = useAuth();

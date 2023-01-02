@@ -1,19 +1,20 @@
-import TenisImg from '@assets/tenis.png';
 import { Button } from '@components/Button';
 import { ButtonSelect } from '@components/ButtonSelect';
 import { Input } from '@components/Input';
+import { PaymentMethods } from '@components/PaymentMethods';
+import { ProductCard } from '@components/ProductCard';
 import { UserPhoto } from '@components/UserPhoto';
 import { ProductResponseDTO } from '@dtos/ProductResponseDTO';
 import BottomSheet, { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { useAuth } from '@hooks/useAuth';
+import { useNavigation } from '@react-navigation/native';
+import { AppNavigatorRoutesProps } from '@routes/app.routes';
 import { api } from '@services/api';
 import {
   Box,
-  Checkbox,
   Divider,
   FlatList,
   HStack,
-  Image,
   Pressable,
   Switch,
   Text,
@@ -32,17 +33,21 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 export function Home() {
   const [bottomIndex, setBottomIndex] = useState(0);
-  const [switchProduct, setSwitchProduct] = useState(false);
-  const [groupValues, setGroupValues] = useState<string[]>([]);
-  const [products, setProducts] = useState<ProductResponseDTO[]>([]);
+  const [paymentMethods, setPaymentMethods] = useState<string[]>([]);
   const [productsFiltered, setProductsFiltered] = useState<
     ProductResponseDTO[]
   >([]);
-
-  console.log(groupValues);
+  const [productIsNew, setProductIsNew] = useState<boolean | undefined>(
+    undefined
+  );
+  const [acceptTrade, setAcceptTrade] = useState<boolean | undefined>(
+    undefined
+  );
+  const [query, setQuery] = useState<string | undefined>(undefined);
 
   const bottomSheetRef = useRef<BottomSheet>(null);
 
+  const navigation = useNavigation<AppNavigatorRoutesProps>();
   const { colors, sizes } = useTheme();
   const { user } = useAuth();
 
@@ -52,28 +57,53 @@ export function Home() {
     console.log('handleSheetChanges', index);
   }, []);
 
-  const handleCheckChanges = useCallback((items: string[]) => {
-    console.log('handleSheetChanges', items);
-    setGroupValues(items);
-  }, []);
+  function handleOpenAdvertNew() {
+    navigation.navigate('AdvertsRoutes', { screen: 'AdvertNew' });
+  }
 
   function handleToggleBottom() {
     setBottomIndex((prev) => (prev === 1 ? 0 : 1));
   }
 
+  function handleSelectCondition(isNew: boolean) {
+    setProductIsNew((prev) => (prev === isNew ? undefined : isNew));
+  }
+
+  async function fetchProducts(reset?: boolean) {
+    const params = reset
+      ? {}
+      : {
+          query,
+          is_new: productIsNew,
+          accept_trade: acceptTrade,
+          payment_methods: paymentMethods,
+        };
+
+    const response = await api.get<ProductResponseDTO[]>(`/products`, {
+      params,
+    });
+
+    setProductsFiltered(response.data);
+  }
+
+  function handleApplyFilter() {
+    fetchProducts();
+  }
+
+  function handleResetFilter() {
+    setQuery(undefined);
+    setProductIsNew(undefined);
+    setAcceptTrade(undefined);
+    setPaymentMethods([]);
+    fetchProducts(true);
+  }
+
   useEffect(() => {
-    async function fetchProducts() {
-      const response = await api.get<ProductResponseDTO[]>('/users/products');
-
-      setProducts(response.data);
-      setProductsFiltered(response.data);
-    }
-
     fetchProducts();
   }, []);
 
   return (
-    <VStack safeAreaTop flex={1}>
+    <VStack flex={1}>
       <VStack px={6} pt={6}>
         <HStack justifyContent="space-between">
           <HStack>
@@ -94,6 +124,7 @@ export function Home() {
             leftIcon={<Plus size={sizes[6]} color={colors.gray[600]} />}
             w="48%"
             title="Criar anúncio"
+            onPress={handleOpenAdvertNew}
           />
         </HStack>
 
@@ -140,9 +171,11 @@ export function Home() {
         <Input
           mt={3}
           bg="white"
+          value={query}
+          onChangeText={setQuery}
           rightElement={
             <HStack px={4} h={6} alignItems="center">
-              <Pressable onPress={() => console.log('lupa')}>
+              <Pressable onPress={handleApplyFilter}>
                 <MagnifyingGlass color={colors.gray[200]} size={sizes[6]} />
               </Pressable>
 
@@ -159,68 +192,7 @@ export function Home() {
           mt={4}
           data={productsFiltered}
           keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <Box alignSelf="flex-start">
-              {item.product_images.length > 0 ? (
-                <Image
-                  w={40}
-                  h={24}
-                  rounded="md"
-                  source={{
-                    uri: `${api.defaults.baseURL}/images/${item.product_images[0].path}`,
-                  }}
-                  resizeMode="contain"
-                  alt={item.name}
-                />
-              ) : (
-                <Box bg="gray.600" rounded="md" w={40} h={24} />
-              )}
-
-              {item.is_new ? (
-                <Text
-                  color="white"
-                  bg="blueLight"
-                  alignSelf="flex-start"
-                  px={3}
-                  py={1}
-                  rounded="full"
-                  fontSize="2xs"
-                  fontFamily="heading"
-                  position="absolute"
-                  right={2}
-                  top={2}>
-                  NOVO
-                </Text>
-              ) : (
-                <Text
-                  color="white"
-                  bg="gray.200"
-                  alignSelf="flex-start"
-                  px={3}
-                  py={1}
-                  rounded="full"
-                  fontSize="2xs"
-                  fontFamily="heading"
-                  position="absolute"
-                  right={2}
-                  top={2}>
-                  USADO
-                </Text>
-              )}
-
-              <Text color="gray.200" fontSize="sm">
-                {item.name}
-              </Text>
-
-              <Text
-                color="gray.100"
-                fontSize="sm"
-                fontWeight={600}
-                fontFamily="heading">
-                R$ {item.price}
-              </Text>
-            </Box>
-          )}
+          renderItem={({ item }) => <ProductCard item={item} />}
           numColumns={2}
           columnWrapperStyle={{ flex: 1, justifyContent: 'space-between' }}
           showsVerticalScrollIndicator={false}
@@ -250,8 +222,18 @@ export function Home() {
             </Text>
 
             <HStack mt={3} space={2}>
-              <ButtonSelect title="NOVO" selected />
-              <ButtonSelect title="USADO" />
+              <ButtonSelect
+                title="NOVO"
+                selected={productIsNew}
+                onPress={() => handleSelectCondition(true)}
+              />
+              <ButtonSelect
+                title="USADO"
+                selected={
+                  productIsNew === undefined ? productIsNew : !productIsNew
+                }
+                onPress={() => handleSelectCondition(false)}
+              />
             </HStack>
 
             <Text mt={6} color="gray.200" fontSize="sm" fontFamily="heading">
@@ -261,102 +243,32 @@ export function Home() {
             <Switch
               alignSelf="flex-start"
               name="troca"
-              isChecked={switchProduct}
+              isChecked={acceptTrade}
               size="lg"
               onTrackColor="blueLight"
               offTrackColor="gray.500"
               onThumbColor="white"
               offThumbColor="white"
-              onToggle={() => setSwitchProduct((prev) => !prev)}
+              onToggle={() => setAcceptTrade((prev) => !prev)}
             />
 
-            <Text mt={6} color="gray.200" fontSize="sm" fontFamily="heading">
-              Meios de pagamento aceitos
-            </Text>
-
-            <Checkbox.Group
-              onChange={(values) => handleCheckChanges(values || [])}
-              value={groupValues}
-              accessibilityLabel="choose numbers">
-              <Checkbox
-                _icon={{ color: 'white' }}
-                _checked={{
-                  bg: 'blueLight',
-                  borderColor: 'blueLight',
-                  _pressed: { borderColor: 'blueLight', bg: 'blue' },
-                }}
-                _text={{ fontSize: 'md' }}
-                size="md"
-                my={1}
-                value="Boleto"
-                accessibilityLabel="This is a dummy checkbox">
-                Boleto
-              </Checkbox>
-
-              <Checkbox
-                _icon={{ color: 'white' }}
-                _checked={{
-                  bg: 'blueLight',
-                  borderColor: 'blueLight',
-                  _pressed: { borderColor: 'blueLight', bg: 'blue' },
-                }}
-                _text={{ fontSize: 'md' }}
-                size="md"
-                my={1}
-                value="Pix"
-                accessibilityLabel="This is a dummy checkbox">
-                Pix
-              </Checkbox>
-
-              <Checkbox
-                _icon={{ color: 'white' }}
-                _checked={{
-                  bg: 'blueLight',
-                  borderColor: 'blueLight',
-                  _pressed: { borderColor: 'blueLight', bg: 'blue' },
-                }}
-                _text={{ fontSize: 'md' }}
-                size="md"
-                my={1}
-                value="Dinheiro"
-                accessibilityLabel="This is a dummy checkbox">
-                Dinheiro
-              </Checkbox>
-
-              <Checkbox
-                _icon={{ color: 'white' }}
-                _checked={{
-                  bg: 'blueLight',
-                  borderColor: 'blueLight',
-                  _pressed: { borderColor: 'blueLight', bg: 'blue' },
-                }}
-                _text={{ fontSize: 'md' }}
-                size="md"
-                my={1}
-                value="Cartão de Crédito"
-                accessibilityLabel="This is a dummy checkbox">
-                Cartão de Crédito
-              </Checkbox>
-
-              <Checkbox
-                _icon={{ color: 'white' }}
-                _checked={{
-                  bg: 'blueLight',
-                  borderColor: 'blueLight',
-                  _pressed: { borderColor: 'blueLight', bg: 'blue' },
-                }}
-                _text={{ fontSize: 'md' }}
-                size="md"
-                my={1}
-                value="Depósito Bancário"
-                accessibilityLabel="This is a dummy checkbox">
-                Depósito Bancário
-              </Checkbox>
-            </Checkbox.Group>
+            <PaymentMethods
+              onChange={setPaymentMethods}
+              values={paymentMethods}
+            />
 
             <HStack mt={16} justifyContent="space-between">
-              <Button bg="gray" w="48%" title="Resetar filtros" />
-              <Button w="48%" title="Aplicar filtros" />
+              <Button
+                bg="gray"
+                w="48%"
+                title="Resetar filtros"
+                onPress={handleResetFilter}
+              />
+              <Button
+                w="48%"
+                title="Aplicar filtros"
+                onPress={handleApplyFilter}
+              />
             </HStack>
           </Box>
         </BottomSheetScrollView>
