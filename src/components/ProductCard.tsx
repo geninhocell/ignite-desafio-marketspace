@@ -1,14 +1,23 @@
 import { ProductResponseDTO } from '@dtos/ProductResponseDTO';
 import { api } from '@services/api';
-import { Box, HStack, Image, Text } from 'native-base';
+import {
+  Box,
+  HStack,
+  Image,
+  IPressableProps,
+  Pressable,
+  Text,
+} from 'native-base';
 
-type Props = {
+type Props = IPressableProps & {
   item: ProductResponseDTO;
 };
 
-export function ProductCard({ item }: Props) {
+export function ProductCard({ item, ...rest }: Props) {
+  const isActive = item.is_active === undefined ? true : item.is_active;
+
   return (
-    <Box alignSelf="flex-start">
+    <Pressable alignSelf="flex-start" {...rest}>
       {item.product_images.length > 0 ? (
         <Image
           w={40}
@@ -56,24 +65,24 @@ export function ProductCard({ item }: Props) {
         </Text>
       )}
 
-      <Text color={item.is_active ? 'gray.200' : 'gray.400'} fontSize="sm">
+      <Text color={isActive ? 'gray.200' : 'gray.400'} fontSize="sm">
         {item.name}
       </Text>
 
       <HStack space={1} alignItems="flex-end">
         <Text
-          color={item.is_active ? 'gray.100' : 'gray.400'}
+          color={isActive ? 'gray.100' : 'gray.400'}
           fontSize="xs"
           fontFamily="heading">
           R$
         </Text>
         <Text
-          color={item.is_active ? 'gray.100' : 'gray.400'}
+          color={isActive ? 'gray.100' : 'gray.400'}
           fontSize="sm"
           fontFamily="heading">
           {item.price}
         </Text>
       </HStack>
-    </Box>
+    </Pressable>
   );
 }

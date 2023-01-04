@@ -33,8 +33,8 @@ export function Adverts() {
 
   const { sizes, colors } = useTheme();
 
-  function handleOpenAdvertNew() {
-    navigation.navigate('AdvertNew');
+  function handleOpenAdvertNew(id?: string) {
+    navigation.navigate('AdvertNew', { advertId: id });
   }
 
   async function fetchAdverts() {
@@ -79,7 +79,7 @@ export function Adverts() {
         <IconButton
           p={0}
           icon={<Plus size={sizes[6]} color={colors.gray[100]} />}
-          onPress={handleOpenAdvertNew}
+          onPress={() => handleOpenAdvertNew()}
         />
       </HStack>
 
@@ -108,7 +108,12 @@ export function Adverts() {
         my={5}
         data={advertsFiltered}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <ProductCard item={item} />}
+        renderItem={({ item }) => (
+          <ProductCard
+            item={item}
+            onPress={() => handleOpenAdvertNew(item.id)}
+          />
+        )}
         numColumns={2}
         columnWrapperStyle={{ flex: 1, justifyContent: 'space-between' }}
         showsVerticalScrollIndicator={false}

@@ -7,7 +7,7 @@ import { Adverts } from '@screens/Adverts';
 
 export type AdvertsRoutesType = {
   Adverts: undefined;
-  AdvertNew: undefined;
+  AdvertNew: { advertId?: string };
 };
 
 export type AdvertsNavigatorRoutesProps =
@@ -17,7 +17,9 @@ const { Navigator, Screen } = createNativeStackNavigator<AdvertsRoutesType>();
 
 export function AdvertsRoutes() {
   return (
-    <Navigator screenOptions={{ headerShown: false }}>
+    <Navigator
+      screenOptions={{ headerShown: false }}
+      initialRouteName="Adverts">
       <Screen name="Adverts" component={Adverts} />
       <Screen name="AdvertNew" component={AdvertNew} />
     </Navigator>

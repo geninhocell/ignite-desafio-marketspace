@@ -18,7 +18,7 @@ import {
   VStack,
 } from 'native-base';
 import { useState } from 'react';
-import { Controller, useForm } from 'react-hook-form';
+import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 import * as Yup from 'yup';
 
 type FormDataProps = {
@@ -57,7 +57,10 @@ export function SignIn() {
     navigation.navigate('SignUp');
   }
 
-  async function handleSignIn({ email, password }: FormDataProps) {
+  const onSubmit: SubmitHandler<FormDataProps> = async ({
+    email,
+    password,
+  }) => {
     try {
       setIsLoading(true);
       await signIn(email, password);
@@ -76,7 +79,7 @@ export function SignIn() {
 
       setIsLoading(false);
     }
-  }
+  };
 
   return (
     <ScrollView
@@ -115,7 +118,7 @@ export function SignIn() {
                 onChangeText={onChange}
                 value={value}
                 returnKeyType="send"
-                onSubmitEditing={handleSubmit(handleSignIn)}
+                onSubmitEditing={handleSubmit(onSubmit)}
                 errorMessage={errors.password?.message}
               />
             )}
@@ -126,7 +129,7 @@ export function SignIn() {
           isLoading={isLoading}
           title="Entrar"
           bg="blue"
-          onPress={handleSubmit(handleSignIn)}
+          onPress={handleSubmit(onSubmit)}
         />
       </Center>
 

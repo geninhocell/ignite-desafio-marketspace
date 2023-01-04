@@ -16,7 +16,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { Center, ScrollView, Text, useTheme, useToast } from 'native-base';
 import { PencilSimpleLine } from 'phosphor-react-native';
 import { useState } from 'react';
-import { Controller, useForm } from 'react-hook-form';
+import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 import { TouchableOpacity } from 'react-native';
 import * as Yup from 'yup';
 
@@ -74,7 +74,12 @@ export function SignUp() {
     navigation.goBack();
   }
 
-  async function handleSignUp({ name, email, tel, password }: FormDataProps) {
+  const onSubmit: SubmitHandler<FormDataProps> = async ({
+    name,
+    email,
+    tel,
+    password,
+  }) => {
     try {
       setIsLoading(true);
 
@@ -114,7 +119,7 @@ export function SignUp() {
         bgColor: 'red',
       });
     }
-  }
+  };
 
   async function handleUserPhotoSelect() {
     try {
@@ -267,7 +272,7 @@ export function SignUp() {
               value={value}
               errorMessage={errors.password_confirm?.message}
               returnKeyType="send"
-              onSubmitEditing={handleSubmit(handleSignUp)}
+              onSubmitEditing={handleSubmit(onSubmit)}
             />
           )}
         />
@@ -277,7 +282,7 @@ export function SignUp() {
           title="Criar uma conta"
           bg="black"
           isLoading={isLoading}
-          onPress={handleSubmit(handleSignUp)}
+          onPress={handleSubmit(onSubmit)}
         />
 
         <Text mt={12} color="gray.200" fontSize="sm" fontFamily="body">

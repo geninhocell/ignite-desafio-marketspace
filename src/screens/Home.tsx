@@ -7,7 +7,7 @@ import { UserPhoto } from '@components/UserPhoto';
 import { ProductResponseDTO } from '@dtos/ProductResponseDTO';
 import BottomSheet, { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { useAuth } from '@hooks/useAuth';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { AppNavigatorRoutesProps } from '@routes/app.routes';
 import { api } from '@services/api';
 import {
@@ -29,7 +29,7 @@ import {
   Tag,
   X,
 } from 'phosphor-react-native';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 
 export function Home() {
   const [bottomIndex, setBottomIndex] = useState(0);
@@ -45,6 +45,8 @@ export function Home() {
   );
   const [query, setQuery] = useState<string | undefined>(undefined);
 
+  const [myProductsQuantity, setMyProductsQuantity] = useState(0);
+
   const bottomSheetRef = useRef<BottomSheet>(null);
 
   const navigation = useNavigation<AppNavigatorRoutesProps>();
@@ -53,12 +55,11 @@ export function Home() {
 
   const snapPoints = useMemo(() => ['3%', '80%'], []);
 
-  const handleSheetChanges = useCallback((index: number) => {
-    console.log('handleSheetChanges', index);
-  }, []);
-
-  function handleOpenAdvertNew() {
-    navigation.navigate('AdvertsRoutes', { screen: 'AdvertNew' });
+  function handleOpenAdvertNew(id?: string) {
+    navigation.navigate('AdvertsRoutes', {
+      screen: 'AdvertNew',
+      params: { advertId: id },
+    });
   }
 
   function handleToggleBottom() {
@@ -67,6 +68,12 @@ export function Home() {
 
   function handleSelectCondition(isNew: boolean) {
     setProductIsNew((prev) => (prev === isNew ? undefined : isNew));
+  }
+
+  function handleOpenAdverts() {
+    navigation.navigate('AdvertsRoutes', {
+      screen: 'Adverts',
+    });
   }
 
   async function fetchProducts(reset?: boolean) {
@@ -86,6 +93,14 @@ export function Home() {
     setProductsFiltered(response.data);
   }
 
+  async function fetchMyProducts() {
+    const response = await api.get<ProductResponseDTO[]>(`/users/products`, {});
+
+    setMyProductsQuantity(
+      response.data.filter((item) => item.is_active).length
+    );
+  }
+
   function handleApplyFilter() {
     fetchProducts();
   }
@@ -98,13 +113,16 @@ export function Home() {
     fetchProducts(true);
   }
 
-  useEffect(() => {
-    fetchProducts();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      fetchProducts();
+      fetchMyProducts();
+    }, [])
+  );
 
   return (
     <VStack flex={1}>
-      <VStack px={6} pt={6}>
+      <VStack px={6} pt={6} flex={1}>
         <HStack justifyContent="space-between">
           <HStack>
             <UserPhoto
@@ -124,7 +142,7 @@ export function Home() {
             leftIcon={<Plus size={sizes[6]} color={colors.gray[600]} />}
             w="48%"
             title="Criar anúncio"
-            onPress={handleOpenAdvertNew}
+            onPress={() => handleOpenAdvertNew()}
           />
         </HStack>
 
@@ -144,12 +162,12 @@ export function Home() {
             <Tag color={colors.blue as any} size={sizes[6]} />
 
             <VStack>
-              <Text>4</Text>
+              <Text>{myProductsQuantity}</Text>
               <Text>Anúncios ativos</Text>
             </VStack>
           </HStack>
 
-          <Pressable>
+          <Pressable onPress={handleOpenAdverts}>
             <HStack space={4}>
               <Text
                 color="blue"
@@ -189,7 +207,8 @@ export function Home() {
         />
 
         <FlatList
-          mt={4}
+          pt={4}
+          mb={10}
           data={productsFiltered}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => <ProductCard item={item} />}
@@ -203,8 +222,7 @@ export function Home() {
       <BottomSheet
         ref={bottomSheetRef}
         index={bottomIndex}
-        snapPoints={snapPoints}
-        onChange={handleSheetChanges}>
+        snapPoints={snapPoints}>
         <BottomSheetScrollView>
           <Box flex={1} px={6} pb={6}>
             <HStack alignItems="center" justifyContent="space-between">

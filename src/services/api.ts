@@ -27,7 +27,7 @@ type ProcessQueueParams = {
 };
 
 const api = axios.create({
-  baseURL: 'http://192.168.0.114:3333',
+  baseURL: 'http://192.168.1.104:3333',
 }) as APIInstanceProps;
 
 let isRefreshing = false;
@@ -101,8 +101,6 @@ api.registerInterceptTokenManager = ({ signOut, refreshTokenUpdated }) => {
               refreshTokenUpdated(data.token);
 
               processQueue({ error: null, token: data.token });
-
-              console.log('Token atualizado!');
 
               resolve(originalRequest);
             } catch (error: any) {
