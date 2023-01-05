@@ -8,7 +8,7 @@ import { ProductResponseDTO } from '@dtos/ProductResponseDTO';
 import BottomSheet, { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { useAuth } from '@hooks/useAuth';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { AppNavigatorRoutesProps } from '@routes/app.routes';
+import { AppNavigatorRoutesProps } from '@routes/AppRoutes/index.routes';
 import { api } from '@services/api';
 import {
   Box,
@@ -58,6 +58,13 @@ export function Home() {
   function handleOpenAdvertNew(id?: string) {
     navigation.navigate('AdvertsRoutes', {
       screen: 'AdvertNew',
+      params: { advertId: id },
+    });
+  }
+
+  function handleOpenAdvertDetails(id: string) {
+    navigation.navigate('HomeRoutes', {
+      screen: 'AdvertDetails',
       params: { advertId: id },
     });
   }
@@ -190,6 +197,7 @@ export function Home() {
           mt={3}
           bg="white"
           value={query}
+          placeholder="Buscar anúncio"
           onChangeText={setQuery}
           rightElement={
             <HStack px={4} h={6} alignItems="center">
@@ -211,7 +219,12 @@ export function Home() {
           mb={10}
           data={productsFiltered}
           keyExtractor={(item) => item.id}
-          renderItem={({ item }) => <ProductCard item={item} />}
+          renderItem={({ item }) => (
+            <ProductCard
+              item={item}
+              onPress={() => handleOpenAdvertDetails(item.id)}
+            />
+          )}
           numColumns={2}
           columnWrapperStyle={{ flex: 1, justifyContent: 'space-between' }}
           showsVerticalScrollIndicator={false}

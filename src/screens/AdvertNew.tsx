@@ -6,7 +6,7 @@ import { TextArea } from '@components/TextArea';
 import { ProductResponseDTO } from '@dtos/ProductResponseDTO';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { AdvertsNavigatorRoutesProps } from '@routes/adverts.routes';
+import { AdvertsNavigatorRoutesProps } from '@routes/AppRoutes/adverts.routes';
 import { api } from '@services/api';
 import { AppError } from '@utils/AppError';
 import * as ImagePicker from 'expo-image-picker';

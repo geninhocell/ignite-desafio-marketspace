@@ -2,7 +2,7 @@ import { Loading } from '@components/Loading';
 import { ProductCard } from '@components/ProductCard';
 import { ProductResponseDTO } from '@dtos/ProductResponseDTO';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { AdvertsNavigatorRoutesProps } from '@routes/adverts.routes';
+import { AdvertsNavigatorRoutesProps } from '@routes/AppRoutes/adverts.routes';
 import { api } from '@services/api';
 import {
   Box,
