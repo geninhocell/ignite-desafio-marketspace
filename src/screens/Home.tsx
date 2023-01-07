@@ -63,9 +63,9 @@ export function Home() {
   }
 
   function handleOpenAdvertDetails(id: string) {
-    navigation.navigate('HomeRoutes', {
+    navigation.navigate('AdvertsRoutes', {
       screen: 'AdvertDetails',
-      params: { advertId: id },
+      params: { advertId: id, owner: false },
     });
   }
 
@@ -229,6 +229,7 @@ export function Home() {
           columnWrapperStyle={{ flex: 1, justifyContent: 'space-between' }}
           showsVerticalScrollIndicator={false}
           ItemSeparatorComponent={() => <Box py={3} />}
+          ListFooterComponent={<Box my={10} />}
         />
       </VStack>
 

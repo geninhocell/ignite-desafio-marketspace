@@ -1,4 +1,5 @@
 import { Loading } from '@components/Loading';
+import { AdvertContextProvider } from '@contexts/AdvertContext';
 import { AuthContextProvider } from '@contexts/AuthContext';
 import {
   Karla_400Regular,
@@ -24,7 +25,9 @@ export default function App() {
       <NativeBaseProvider theme={THEME}>
         <StatusBar style="auto" />
         <AuthContextProvider>
-          {fontsLoaded ? <Routes /> : <Loading />}
+          <AdvertContextProvider>
+            {fontsLoaded ? <Routes /> : <Loading />}
+          </AdvertContextProvider>
         </AuthContextProvider>
       </NativeBaseProvider>
     </GestureHandlerRootView>

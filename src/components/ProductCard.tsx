@@ -17,7 +17,7 @@ export function ProductCard({ item, ...rest }: Props) {
   const isActive = item.is_active === undefined ? true : item.is_active;
 
   return (
-    <Pressable alignSelf="flex-start" {...rest}>
+    <Pressable alignSelf="flex-start" w={40} {...rest}>
       {item.product_images.length > 0 ? (
         <Image
           w={40}
@@ -65,7 +65,10 @@ export function ProductCard({ item, ...rest }: Props) {
         </Text>
       )}
 
-      <Text color={isActive ? 'gray.200' : 'gray.400'} fontSize="sm">
+      <Text
+        flexShrink={1}
+        color={isActive ? 'gray.200' : 'gray.400'}
+        fontSize="sm">
         {item.name}
       </Text>
 
@@ -80,7 +83,7 @@ export function ProductCard({ item, ...rest }: Props) {
           color={isActive ? 'gray.100' : 'gray.400'}
           fontSize="sm"
           fontFamily="heading">
-          {item.price}
+          {String(item.price).replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,')}
         </Text>
       </HStack>
     </Pressable>

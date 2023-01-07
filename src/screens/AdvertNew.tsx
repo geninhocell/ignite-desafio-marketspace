@@ -5,6 +5,7 @@ import { PaymentMethods } from '@components/PaymentMethods';
 import { TextArea } from '@components/TextArea';
 import { ProductResponseDTO } from '@dtos/ProductResponseDTO';
 import { yupResolver } from '@hookform/resolvers/yup';
+import { useAdvert } from '@hooks/useAdvert';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { AdvertsNavigatorRoutesProps } from '@routes/AppRoutes/adverts.routes';
 import { api } from '@services/api';
@@ -76,6 +77,7 @@ export function AdvertNew() {
   const navigation = useNavigation<AdvertsNavigatorRoutesProps>();
   const { colors, sizes } = useTheme();
   const toast = useToast();
+  const { setProductRequest } = useAdvert();
 
   const { advertId } = route.params as RouteParams;
 
@@ -150,74 +152,29 @@ export function AdvertNew() {
     }
   }
 
-  const onSubmit: SubmitHandler<FormDataProps> = async ({
+  const onSubmit: SubmitHandler<FormDataProps> = ({
     name,
     description,
     price,
   }) => {
-    try {
-      setIsLoading(true);
+    const data = {
+      id: advertId,
+      name,
+      description,
+      price: Number(price),
+      is_new: isNew === 'true',
+      accept_trade: !!acceptTrade,
+      payment_methods: paymentMethods,
+      images,
+    };
 
-      const data = {
-        name,
-        description,
-        price: Number(price),
-        is_new: isNew === 'true',
-        accept_trade: !!acceptTrade,
-        payment_methods: paymentMethods,
-      };
+    setProductRequest(data);
 
-      let productId: string;
-
-      if (advertId) {
-        await api.put(`/products/${advertId}`, data);
-        productId = advertId;
-      } else {
-        const response = await api.post('/products', data);
-        productId = response.data.id;
-      }
-
-      const imagesFiltered = images.filter((item) => !item.id);
-
-      if (imagesFiltered.length > 0) {
-        const productImagesForm = new FormData();
-
-        imagesFiltered
-          .map((item, index) => {
-            return {
-              name: `${name}-${index}.${item.extension}`.toLowerCase(),
-              uri: item.uri,
-              type: item.type,
-            };
-          })
-          .forEach((item) => productImagesForm.append('images', item as any));
-
-        productImagesForm.append('product_id', productId);
-
-        await api.post('/products/images', productImagesForm, {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        });
-      }
-
-      navigation.goBack();
-    } catch (e) {
-      console.error(e);
-      const isAppError = e instanceof AppError;
-
-      const title = isAppError
-        ? e.message
-        : 'Não foi possível criar anúncio. Tente novamente mais tarde!';
-
-      toast.show({
-        title,
-        placement: 'top',
-        bgColor: 'red',
-      });
-
-      setIsLoading(false);
-    }
+    navigation.navigate('AdvertDetails', {
+      advertId: undefined,
+      owner: true,
+      preView: true,
+    });
   };
 
   function handleCancel() {
@@ -265,6 +222,7 @@ export function AdvertNew() {
         });
 
         setIsLoading(false);
+        navigation.navigate('Adverts');
       } finally {
         setIsLoadingData(false);
       }
@@ -494,7 +452,7 @@ export function AdvertNew() {
         <Button
           w="48%"
           isLoading={isLoading}
-          title={advertId ? 'Atualizar' : 'Avançar'}
+          title="Avançar"
           onPress={handleSubmit(onSubmit)}
         />
       </HStack>

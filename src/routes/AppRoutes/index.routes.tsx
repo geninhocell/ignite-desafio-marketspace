@@ -67,9 +67,18 @@ export function AppRoutes() {
       <Screen
         name="AdvertsRoutes"
         component={AdvertsRoutes}
-        options={{
+        options={({ route }) => ({
           tabBarIcon: ({ color }) => <Tag color={color} size={iconSize} />,
-        }}
+          tabBarStyle: ((route) => {
+            const routeName = getFocusedRouteNameFromRoute(route) ?? '';
+
+            if (routeName === 'AdvertDetails') {
+              return { ...barStyle, display: 'none' };
+            }
+
+            return barStyle;
+          })(route),
+        })}
       />
       <Screen
         name="SignIn"

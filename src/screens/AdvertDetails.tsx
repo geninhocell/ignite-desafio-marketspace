@@ -1,16 +1,18 @@
 import { Button } from '@components/Button';
+import { CardProductDetails } from '@components/CardProductDetails';
 import { Loading } from '@components/Loading';
-import { UserPhoto } from '@components/UserPhoto';
 import { ProductShowResponseDTO } from '@dtos/ProductShowResponseDTO';
+import { useAdvert } from '@hooks/useAdvert';
+import { useAuth } from '@hooks/useAuth';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import { AdvertsNavigatorRoutesProps } from '@routes/AppRoutes/adverts.routes';
 import { api } from '@services/api';
 import { AppError } from '@utils/AppError';
 import {
-  Box,
+  Center,
   Heading,
   HStack,
   IconButton,
-  Image,
   ScrollView,
   Text,
   useTheme,
@@ -19,36 +21,34 @@ import {
 } from 'native-base';
 import {
   ArrowLeft,
-  Barcode,
-  CreditCard,
-  Money,
-  QrCode,
+  PencilSimpleLine,
+  Power,
+  Tag,
+  TrashSimple,
   WhatsappLogo,
 } from 'phosphor-react-native';
 import { useEffect, useState } from 'react';
-import { Dimensions, Linking } from 'react-native';
-import Carousel from 'react-native-reanimated-carousel';
+import { Linking } from 'react-native';
 
 type RouteParams = {
-  advertId: string;
+  advertId?: string;
+  owner: boolean;
+  preView?: boolean;
 };
-
-const WIDTH = Dimensions.get('window').width;
 
 export function AdvertDetails() {
   const [isLoading, setIsLoading] = useState(false);
-  const [imageIndex, setImageIndex] = useState(0);
-  const [payments, setPayments] = useState<string[]>([]);
   const [advert, setAdvert] = useState({} as ProductShowResponseDTO);
 
   const route = useRoute();
-  const navigation = useNavigation();
+  const navigation = useNavigation<AdvertsNavigatorRoutesProps>();
   const { colors, sizes } = useTheme();
   const toast = useToast();
+  const { productRequest, createOrSaveProduct, createOrSaveProductIsLoading } =
+    useAdvert();
+  const { user } = useAuth();
 
-  const { advertId } = route.params as RouteParams;
-
-  const HEIGHT = sizes[72];
+  const { advertId, owner, preView } = route.params as RouteParams;
 
   async function handleOpenWhats() {
     try {
@@ -77,29 +77,90 @@ export function AdvertDetails() {
     }
   }
 
+  async function handleToggleActiveAdvert() {
+    try {
+      const is_active = !advert.is_active;
+
+      await api.patch(`/products/${advertId}`, {
+        is_active,
+      });
+
+      setAdvert({ ...advert, is_active });
+    } catch (e) {
+      console.error(e);
+      const isAppError = e instanceof AppError;
+
+      const title = isAppError
+        ? e.message
+        : 'Não foi possível atualizar o anúncio. Tente novamente mais tarde!';
+
+      toast.show({
+        title,
+        placement: 'top',
+        bgColor: 'red',
+      });
+    }
+  }
+
+  async function handleDeleteAdvert() {
+    try {
+      await api.delete(`/products/${advertId}`);
+
+      navigation.goBack();
+    } catch (e) {
+      console.error(e);
+      const isAppError = e instanceof AppError;
+
+      const title = isAppError
+        ? e.message
+        : 'Não foi possível atualizar o anúncio. Tente novamente mais tarde!';
+
+      toast.show({
+        title,
+        placement: 'top',
+        bgColor: 'red',
+      });
+    } finally {
+      navigation.navigate('Adverts');
+    }
+  }
+
+  function handleOpenAdvertNew() {
+    navigation.navigate('AdvertNew', { advertId });
+  }
+
+  async function handleSendAdvert() {
+    try {
+      await createOrSaveProduct();
+
+      navigation.navigate('Adverts');
+    } catch (e) {
+      console.error(e);
+      const isAppError = e instanceof AppError;
+
+      const title = isAppError
+        ? e.message
+        : 'Não foi possível publicar anúncio. Tente novamente mais tarde!';
+
+      toast.show({
+        title,
+        placement: 'top',
+        bgColor: 'red',
+      });
+    }
+  }
+
   useEffect(() => {
     async function fetchProduct() {
       setIsLoading(true);
       try {
-        const response = await api.get<ProductShowResponseDTO>(
-          `/products/${advertId}`
-        );
+        if (advertId) {
+          const response = await api.get<ProductShowResponseDTO>(
+            `/products/${advertId}`
+          );
 
-        const productFormat = {
-          ...response.data,
-          product_images: response.data.product_images.map((item) => ({
-            ...item,
-            path: `${api.defaults.baseURL}/images/${item.path}`,
-          })),
-          user: {
-            ...response.data.user,
-            avatar: `${api.defaults.baseURL}/images/${response.data.user.avatar}`,
-          },
-        };
-
-        setPayments(response.data.payment_methods.map((item) => item.key));
-
-        setAdvert(productFormat);
+          setAdvert(response.data);
+        }
       } catch (e) {
         console.error(e);
         const isAppError = e instanceof AppError;
@@ -120,199 +181,139 @@ export function AdvertDetails() {
       }
     }
 
-    fetchProduct();
-  }, []);
+    if (preView) {
+      setAdvert({
+        accept_trade: productRequest.accept_trade,
+        created_at: '',
+        description: productRequest.description,
+        is_active: true,
+        is_new: productRequest.is_new,
+        price: productRequest.price,
+        name: productRequest.name,
+        payment_methods: productRequest.payment_methods.map((item) => ({
+          key: item,
+          name: '',
+        })),
+        product_images: productRequest.images.map((item) => ({
+          id: item.uri,
+          path: item.uri,
+        })),
+        updated_at: '',
+        user_id: '',
+        user: {
+          avatar: `${api.defaults.baseURL}/images/${user.avatar}`,
+          name: user.name,
+          tel: '',
+        },
+        id: '',
+      });
+    } else {
+      fetchProduct();
+    }
+  }, [advertId]);
 
   return isLoading ? (
     <Loading />
   ) : (
     <VStack flex={1} bg="gray.600">
       <ScrollView pt={6} showsVerticalScrollIndicator={false}>
-        <IconButton
-          pl={4}
-          alignSelf="flex-start"
-          icon={<ArrowLeft size={sizes[6]} color={colors.gray[100]} />}
-          onPress={navigation.goBack}
-        />
-
-        <Carousel
-          width={WIDTH}
-          height={HEIGHT}
-          data={advert.product_images}
-          scrollAnimationDuration={200}
-          onSnapToItem={(index) => setImageIndex(index)}
-          renderItem={({ item }) => (
-            <Image
-              w={WIDTH}
-              h={HEIGHT}
-              source={{ uri: item.path }}
-              alt="imagem do produto"
-              resizeMode="cover"
-            />
-          )}
-        />
-
-        <HStack space={2} bottom={1.5} px={3}>
-          <Box
-            flexGrow={1}
-            h={1}
-            bg={imageIndex === 0 ? 'gray.700' : 'gray.500'}
-            rounded="md"
-          />
-          <Box
-            flexGrow={1}
-            h={1}
-            bg={imageIndex === 1 ? 'gray.700' : 'gray.500'}
-            rounded="md"
-          />
-          <Box
-            flexGrow={1}
-            h={1}
-            bg={imageIndex === 2 ? 'gray.700' : 'gray.500'}
-            rounded="md"
-          />
-        </HStack>
-
-        <VStack pt={5} px={6}>
-          {advert?.user?.avatar && (
-            <HStack alignItems="center">
-              <UserPhoto
-                borderWidth={1}
-                borderColor="blueLight"
-                mr={2}
-                size={6}
-                alt="foto do vendedor"
-                source={{ uri: advert.user.avatar }}
-              />
-
-              <Text fontSize="sm" color="gray.100">
-                {advert.user.name}
-              </Text>
-            </HStack>
-          )}
-
-          <Box
-            mt={6}
-            alignSelf="flex-start"
-            bg="gray.500"
-            px={2}
-            py={1}
-            rounded="xl">
-            <Heading color="gray.200" fontSize="2xs">
-              {advert.is_new ? 'NOVO' : 'USADO'}
-            </Heading>
-          </Box>
-
-          <HStack mt={2} justifyContent="space-between">
-            <Heading fontSize="xl" color="gray.100">
-              {advert.name}
+        {preView ? (
+          <Center bg="blueLight" h={24}>
+            <Heading fontSize="md" color="gray.700">
+              Pré visualização do anúncio
             </Heading>
 
-            <HStack space={1} alignItems="baseline">
-              <Heading fontSize="sm" color="blueLight">
-                R$
-              </Heading>
-              <Heading fontSize="xl" color="blueLight">
-                {advert.price}
-              </Heading>
-            </HStack>
-          </HStack>
-
-          <Text mt={2} fontSize="sm" color="gray.200">
-            {advert.description}
-          </Text>
-
-          <HStack mt={6} space={1} alignItems="center">
-            <Heading fontSize="sm" color="gray.200">
-              Aceita troca?
-            </Heading>
-
-            <Text fontSize="sm" color="gray.200">
-              {advert.accept_trade ? 'Sim' : 'Não'}
+            <Text fontSize="sm" color="gray.700">
+              É assim que seu produto vai aparecer!
             </Text>
+          </Center>
+        ) : (
+          <HStack justifyContent="space-between">
+            <IconButton
+              pl={4}
+              alignSelf="flex-start"
+              icon={<ArrowLeft size={sizes[6]} color={colors.gray[100]} />}
+              onPress={navigation.goBack}
+            />
+
+            {owner && (
+              <IconButton
+                pr={4}
+                alignSelf="flex-start"
+                icon={
+                  <PencilSimpleLine size={sizes[6]} color={colors.gray[100]} />
+                }
+                onPress={handleOpenAdvertNew}
+              />
+            )}
           </HStack>
+        )}
 
-          <Heading mt={4} fontSize="sm" color="gray.200">
-            Meios de pagamento:
-          </Heading>
+        {advert.name && <CardProductDetails product={advert} />}
 
-          <VStack mt={2}>
-            {payments.includes('boleto') && (
-              <HStack space={2}>
-                <Barcode size={sizes[5]} color={colors.gray[100]} />
-
-                <Text fontSize="sm" color="gray.200">
-                  Boleto
-                </Text>
-              </HStack>
-            )}
-
-            {payments.includes('pix') && (
-              <HStack space={2}>
-                <QrCode size={sizes[5]} color={colors.gray[100]} />
-
-                <Text fontSize="sm" color="gray.200">
-                  Pix
-                </Text>
-              </HStack>
-            )}
-
-            {payments.includes('cash') && (
-              <HStack space={2}>
-                <Money size={sizes[5]} color={colors.gray[100]} />
-
-                <Text fontSize="sm" color="gray.200">
-                  Dinheiro
-                </Text>
-              </HStack>
-            )}
-
-            {payments.includes('card') && (
-              <HStack space={2}>
-                <CreditCard size={sizes[5]} color={colors.gray[100]} />
-
-                <Text fontSize="sm" color="gray.200">
-                  Cartão de crédito
-                </Text>
-              </HStack>
-            )}
-
-            {payments.includes('deposit') && (
-              <HStack space={2}>
-                <Barcode size={sizes[5]} color={colors.gray[100]} />
-
-                <Text fontSize="sm" color="gray.200">
-                  Depósito bancário
-                </Text>
-              </HStack>
-            )}
-          </VStack>
-        </VStack>
+        <HStack my={10} />
       </ScrollView>
 
-      <HStack
-        bg="gray.700"
-        px={6}
-        py={4}
-        justifyContent="space-between"
-        alignItems="center">
-        <HStack space={1} alignItems="baseline">
-          <Heading fontSize="sm" color="blue">
-            R$
-          </Heading>
-          <Heading fontSize="xl" color="blue">
-            {advert.price}
-          </Heading>
+      {preView ? (
+        <HStack space={2} px={6} py={5}>
+          <Button
+            bg="gray"
+            w="48%"
+            leftIcon={<ArrowLeft size={sizes[4]} color={colors.gray[200]} />}
+            title="Voltar e editar"
+            isLoading={createOrSaveProductIsLoading}
+            onPress={navigation.goBack}
+          />
+          <Button
+            bg="blue"
+            w="48%"
+            leftIcon={<Tag size={sizes[4]} color={colors.gray[700]} />}
+            title="Publicar"
+            isLoading={createOrSaveProductIsLoading}
+            onPress={handleSendAdvert}
+          />
         </HStack>
+      ) : owner ? (
+        <VStack p={6} space={2}>
+          <Button
+            leftIcon={<Power size={sizes[4]} color={colors.gray[700]} />}
+            bg={advert.is_active ? 'black' : 'blue'}
+            title={advert.is_active ? 'Desativar anúncio' : 'Reativar anúncio'}
+            onPress={handleToggleActiveAdvert}
+          />
 
-        <Button
-          leftIcon={<WhatsappLogo color={colors.gray[600]} size={sizes[4]} />}
-          bg="blue"
-          w="48%"
-          title="Entrar em contato"
-          onPress={handleOpenWhats}
-        />
-      </HStack>
+          <Button
+            leftIcon={<TrashSimple size={sizes[4]} color={colors.gray[100]} />}
+            bg="gray"
+            title="Excluir anúncio"
+            onPress={handleDeleteAdvert}
+          />
+        </VStack>
+      ) : (
+        <HStack
+          bg="gray.700"
+          px={6}
+          py={4}
+          justifyContent="space-between"
+          alignItems="center">
+          <HStack space={1} alignItems="baseline">
+            <Heading fontSize="sm" color="blue">
+              R$
+            </Heading>
+            <Heading fontSize="xl" color="blue">
+              {advert.price}
+            </Heading>
+          </HStack>
+
+          <Button
+            leftIcon={<WhatsappLogo color={colors.gray[600]} size={sizes[4]} />}
+            bg="blue"
+            w="48%"
+            title="Entrar em contato"
+            onPress={handleOpenWhats}
+          />
+        </HStack>
+      )}
     </VStack>
   );
 }

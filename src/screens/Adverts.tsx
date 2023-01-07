@@ -33,8 +33,12 @@ export function Adverts() {
 
   const { sizes, colors } = useTheme();
 
-  function handleOpenAdvertNew(id?: string) {
-    navigation.navigate('AdvertNew', { advertId: id });
+  function handleOpenAdvertNew() {
+    navigation.navigate('AdvertNew', { advertId: undefined });
+  }
+
+  function handleOpenAdvertDetails(id: string) {
+    navigation.navigate('AdvertDetails', { advertId: id, owner: true });
   }
 
   async function fetchAdverts() {
@@ -79,7 +83,7 @@ export function Adverts() {
         <IconButton
           p={0}
           icon={<Plus size={sizes[6]} color={colors.gray[100]} />}
-          onPress={() => handleOpenAdvertNew()}
+          onPress={handleOpenAdvertNew}
         />
       </HStack>
 
@@ -111,7 +115,7 @@ export function Adverts() {
         renderItem={({ item }) => (
           <ProductCard
             item={item}
-            onPress={() => handleOpenAdvertNew(item.id)}
+            onPress={() => handleOpenAdvertDetails(item.id)}
           />
         )}
         numColumns={2}
@@ -119,6 +123,7 @@ export function Adverts() {
         showsVerticalScrollIndicator={false}
         ItemSeparatorComponent={() => <Box py={3} />}
         ListEmptyComponent={() => (isLoading ? <Loading /> : null)}
+        ListFooterComponent={<Box my={24} />}
       />
     </VStack>
   );
